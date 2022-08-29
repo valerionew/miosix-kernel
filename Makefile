@@ -29,7 +29,7 @@ LIBS :=
 ##
 ## List here additional include directories (in the form -Iinclude_dir)
 ##
-INCLUDE_DIRS := -I./WS2812 
+INCLUDE_DIRS := -I../WS2812lib 
 
 ##############################################################################
 ## You should not need to modify anything below                             ##
