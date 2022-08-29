@@ -1,0 +1,18 @@
+{
+    "configurations": [
+        {
+            "name": "Miosix",
+            "includePath": [
+                "${workspaceFolder}/**",
+                "${workspaceFolder}/WS2812/**",
+                "${workspaceFolder}/spi"
+            ],
+            "defines": [],
+            "compilerPath": "/usr/bin/arm-miosix-eabi-gcc",
+            "cStandard": "gnu17",
+            "cppStandard": "gnu++17",
+            "intelliSenseMode": "linux-gcc-arm"
+        }
+    ],
+    "version": 4
+}

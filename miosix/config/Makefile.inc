@@ -43,7 +43,7 @@
 #OPT_BOARD := stm32h753xi_eval
 #OPT_BOARD := stm32f407vg_thermal_test_chip
 #OPT_BOARD := stm32f205_generic
-#OPT_BOARD := stm32f103cx_generic
+OPT_BOARD := stm32f103cx_generic
 #OPT_BOARD := stm32f072rb_stm32f0discovery
 #OPT_BOARD := stm32f100cx_generic
 #OPT_BOARD := stm32f303vc_stm32f3discovery
@@ -344,8 +344,8 @@ endif
 ifeq ($(OPT_BOARD),stm32f411re_nucleo)
 
     # Select clock frequency
-    CLOCK_FREQ := -DHSE_VALUE=8000000 -DSYSCLK_FREQ_100MHz=100000000
-    #CLOCK_FREQ := -DHSE_VALUE=8000000 -DSYSCLK_FREQ_84MHz=84000000
+    #CLOCK_FREQ := -DHSE_VALUE=8000000 -DSYSCLK_FREQ_100MHz=100000000
+    CLOCK_FREQ := -DHSE_VALUE=8000000 -DSYSCLK_FREQ_84MHz=84000000
 
 endif
 
