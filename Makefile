@@ -67,7 +67,7 @@ endif
 
 LINK_LIBS := $(LIBS) -L$(KPATH) -Wl,--start-group $(STDLIBS) -Wl,--end-group
 
-all: all-recursive main
+all: all-recursive main load
 
 clean: clean-recursive clean-topdir
 
@@ -88,6 +88,9 @@ clean-recursive:
 
 clean-topdir:
 	-rm -f $(OBJ) main.elf main.hex main.bin main.map $(OBJ:.o=.d)
+
+load: 
+	st-flash write main.bin 0x08000000
 
 main: main.elf
 	$(ECHO) "[CP  ] main.hex"

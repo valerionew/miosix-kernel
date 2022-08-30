@@ -17,7 +17,7 @@
 #OPT_BOARD := stm32f100rb_stm32vldiscovery
 #OPT_BOARD := stm32f103ve_strive_mini
 #OPT_BOARD := stm32f103ze_redbull_v2
-OPT_BOARD := stm32f407vg_stm32f4discovery
+#OPT_BOARD := stm32f407vg_stm32f4discovery
 #OPT_BOARD := stm32f207ig_stm3220g-eval
 #OPT_BOARD := stm32f207zg_ethboard_v2
 #OPT_BOARD := stm32f207ze_als_camboard
@@ -29,7 +29,7 @@ OPT_BOARD := stm32f407vg_stm32f4discovery
 #OPT_BOARD := stm32f100cb_tempsensor
 #OPT_BOARD := stm32f429zi_oledboard2
 #OPT_BOARD := efm32gg332f1024_wandstem
-#OPT_BOARD := stm32f411re_nucleo
+OPT_BOARD := stm32f411re_nucleo
 #OPT_BOARD := stm32f429zi_skyward_anakin
 #OPT_BOARD := stm32f100rc_solertegiard
 #OPT_BOARD := stm32f205rc_skyward_stormtrooper

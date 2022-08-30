@@ -22,6 +22,7 @@ static void spi2sendOnly(unsigned char x){
 void spi_init(){
     {
         FastInterruptDisableLock dLock;
+        led1::mode(Mode::OUTPUT);
         sck::mode(Mode::ALTERNATE);  sck::alternateFunction(5);
         mosi::mode(Mode::ALTERNATE); mosi::alternateFunction(5);
         miso::mode(Mode::ALTERNATE); miso::alternateFunction(5);
@@ -31,12 +32,14 @@ void spi_init(){
 
         SPI2->CR1=SPI_CR1_SSM  //No HW cs
                 | SPI_CR1_SSI
+                | SPI_CR1_LSBFIRST // HMMMMMMM
                 | SPI_CR1_BR_0 //fclk/4 works fine
                 | SPI_CR1_SPE  //SPI enable 
                 | SPI_CR1_MSTR;//Master mode
 }
 
 void spi_transmit(uint8_t * data, uint32_t length){
+    FastInterruptDisableLock dLock;
     uint8_t *pointer = data;
     uint32_t remaining = length;
     while(length > 0){
@@ -80,9 +83,8 @@ int main(){
             }
         leds.show();
         Thread::sleep(50);
-		}
+               }
         ledOff();
-
     }
 }
 
