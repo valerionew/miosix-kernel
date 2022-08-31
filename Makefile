@@ -67,7 +67,7 @@ endif
 
 LINK_LIBS := $(LIBS) -L$(KPATH) -Wl,--start-group $(STDLIBS) -Wl,--end-group
 
-all: all-recursive main load
+all: all-recursive main
 
 clean: clean-recursive clean-topdir
 
