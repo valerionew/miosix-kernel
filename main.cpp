@@ -27,7 +27,7 @@ void spi_init(){
 
         SPI2->CR1=SPI_CR1_SSM  //No HW cs
                 | SPI_CR1_SSI
-                | SPI_CR1_BR_0 //fclk/4 works fine
+                | SPI_CR1_BR_1 //fclk/4 works fine
                 | SPI_CR1_SPE  //SPI enable 
                 | SPI_CR1_MSTR;//Master mode
 }
