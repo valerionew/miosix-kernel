@@ -11,6 +11,7 @@ using namespace miosix;
 using sck  = Gpio<GPIOB_BASE,13>; //Used as HW SPI
 using mosi = Gpio<GPIOB_BASE,15>; //Used as HW SPI
 using miso = Gpio<GPIOB_BASE,14>; //Used as HW SPI
+using sig = Gpio<GPIOB_BASE,3>; 
 
 static void spi2sendOnly(unsigned char x){
     //NOTE: data is sent after the function returns, watch out!
@@ -32,7 +33,6 @@ void spi_init(){
 
         SPI2->CR1=SPI_CR1_SSM  //No HW cs
                 | SPI_CR1_SSI
-                | SPI_CR1_LSBFIRST // HMMMMMM seems beneficial
                 | SPI_CR1_BR_0 //fclk/4 works fine
                 | SPI_CR1_SPE  //SPI enable 
                 | SPI_CR1_MSTR;//Master mode
@@ -48,7 +48,9 @@ void spi_transmit(uint8_t * data, const uint32_t length){
     uint32_t remaining = length;
     while(remaining > 0){
         spi2sendOnly(*pointer);
+        sig::low();
         while(SPI2->SR & SPI_SR_BSY) ;
+        sig::high();
         remaining--;
         pointer++;
     }
@@ -76,6 +78,7 @@ WS2812<numleds> leds(spi_transmit);
 
 
 int main(){  
+    sig::mode(Mode::OUTPUT);
     iprintf("entry\n");  
     spi_init();
     iprintf("spi init done\n");        
