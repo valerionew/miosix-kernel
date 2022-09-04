@@ -13,12 +13,6 @@ using mosi = Gpio<GPIOB_BASE,15>; //Used as HW SPI
 using miso = Gpio<GPIOB_BASE,14>; //Used as HW SPI
 using sig = Gpio<GPIOB_BASE,3>; 
 
-static void spi2sendOnly(unsigned char x){
-    //NOTE: data is sent after the function returns, watch out!
-    while((SPI2->SR & SPI_SR_TXE)==0) ;
-    SPI2->DR=x;
-}
-
 void spi_init(){
     { 
         sck::mode(Mode::ALTERNATE);   
@@ -46,14 +40,11 @@ void spi_transmit(uint8_t * data, const uint32_t length){
 
     uint8_t*pointer = data;
     uint32_t remaining = length;
-    while(remaining > 0){
-        spi2sendOnly(*pointer);
-        sig::low();
-        while(SPI2->SR & SPI_SR_BSY) ;
-        sig::high();
-        remaining--;
-        pointer++;
+    while(remaining-- > 0){
+        while((SPI2->SR & SPI_SR_TXE)==0){} // wait for tx buffer to be empty
+        SPI2->DR=*pointer++; //send data
     }
+    while(SPI2->SR & SPI_SR_BSY){} // wait for send complete
 }
 
 const RGB_t<uint8_t>	violet	( 75,   0, 130);
