@@ -76,7 +76,6 @@ bool spi_transmit_dma(uint8_t * data, uint32_t length){
             }
         }
     }
-    pthread_mutex_unlock(&mutex);
     bool result=!dmaerror;
     pthread_mutex_unlock(&mutex);
     return result;
@@ -120,8 +119,12 @@ int main(){
      
     while(1){
         for(int i = 6; i >0 ; i--){
-            for(int j = 0; j < numleds; j++){
-                leds.setPixel(j, rainbow[(j+i)%6]);
+            {
+                pthread_mutex_lock(&mutex); // since we will be writing to the leds array, we need to lock the mutex
+                for(int j = 0; j < numleds; j++){
+                    leds.setPixel(j, rainbow[(j+i)%6]);
+                }
+                pthread_mutex_unlock(&mutex);
             }
             leds.show();
             Thread::sleep(50);
