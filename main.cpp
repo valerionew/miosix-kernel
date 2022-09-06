@@ -2,6 +2,7 @@
 #include "miosix.h"
 #include "WS2812.h"
 #include <RGB.h>
+#include <RGBColors.h>
 #include <kernel/scheduler/scheduler.h>
 #include <interfaces/delays.h>
 
@@ -12,24 +13,23 @@ using namespace miosix;
 
 static Thread *waiting;
 
+static bool dmaerror = false;
+
 pthread_mutex_t mutex=PTHREAD_MUTEX_INITIALIZER;
 
-using sck  = Gpio<GPIOB_BASE,13>; //Used as HW SPI
-using mosi = Gpio<GPIOB_BASE,15>; //Used as HW SPI
-using miso = Gpio<GPIOB_BASE,14>; //Used as HW SPI
-using sig = Gpio<GPIOB_BASE,3>; 
+//using sck  = Gpio<GPIOB_BASE,13>; // we don't even need to occupy a pin for the clock, just the mosi is enough
+using WS2812pin = Gpio<GPIOB_BASE,15>; //Used as HW SPI
 
 
 void spi_dma_init(){
         // using DMA1 channel 4 and SPI2
         FastInterruptDisableLock dLock;
 
-        sck::mode(Mode::ALTERNATE);   
-        sck::alternateFunction(5);
-        mosi::mode(Mode::ALTERNATE); 
-        mosi::alternateFunction(5);
-        miso::mode(Mode::ALTERNATE); 
-        miso::alternateFunction(5);
+        //sck::mode(Mode::ALTERNATE); // not needed   
+        //sck::alternateFunction(5);
+        WS2812pin::mode(Mode::ALTERNATE); 
+        WS2812pin::alternateFunction(5);
+
         RCC->AHB1ENR |= RCC_AHB1ENR_DMA1EN; // enable DMA1 clock
         RCC->APB1ENR |= RCC_APB1ENR_SPI2EN; // enable SPI2 clock
 
@@ -43,14 +43,15 @@ void spi_dma_init(){
 
 }
 
-void spi_transmit_dma(uint8_t * data, uint32_t length){
+bool spi_transmit_dma(uint8_t * data, uint32_t length){
 
         pthread_mutex_lock(&mutex);
         waiting=Thread::getCurrentThread();
+        dmaerror =false; //clear prev errors
 
-        NVIC_ClearPendingIRQ(DMA1_Stream4_IRQn);
+        NVIC_ClearPendingIRQ(DMA1_Stream4_IRQn); // clear prev interrupts if pending
         NVIC_SetPriority(DMA1_Stream4_IRQn,10);//Low priority for DMA
-        NVIC_EnableIRQ(DMA1_Stream4_IRQn);
+        NVIC_EnableIRQ(DMA1_Stream4_IRQn); // enable DMA interrupt 
 
         DMA1_Stream4->CR=0;
         DMA1_Stream4->PAR=reinterpret_cast<unsigned int>(&SPI2->DR); //Peripheral address
@@ -76,31 +77,36 @@ void spi_transmit_dma(uint8_t * data, uint32_t length){
         }
     }
     pthread_mutex_unlock(&mutex);
+    bool result=!dmaerror;
+    pthread_mutex_unlock(&mutex);
+    return result;
 }
 
 
-void __attribute__((naked)) DMA1_Stream4_IRQHandler()
+
+void __attribute__((used)) SPI2txDmaHandlerImpl()
 {
-    saveContext();
-        DMA1->HIFCR=DMA_HIFCR_CTCIF4
+    if(DMA1->HISR & (DMA_HISR_TEIF4 | DMA_HISR_DMEIF4)) dmaerror=true;
+    DMA1->HIFCR=DMA_HIFCR_CTCIF4
               | DMA_HIFCR_CTEIF4
               | DMA_HIFCR_CDMEIF4;
     waiting->IRQwakeup();
     if(waiting->IRQgetPriority()>Thread::IRQgetCurrentThread()->IRQgetPriority())
-    Scheduler::IRQfindNextThread();
+        Scheduler::IRQfindNextThread();
     waiting=0;
+}
+
+/**
+ * DMA TX end of transfer
+ */
+void __attribute__((naked)) DMA1_Stream4_IRQHandler()
+{
+    saveContext();
+    asm volatile("bl _Z20SPI2txDmaHandlerImplv");
     restoreContext();
 }
 
-
-const RGB_t<uint8_t>	violet	( 75,   0, 130);
-const RGB_t<uint8_t>	blue	(  0,   0, 255);
-const RGB_t<uint8_t>	green	(  0, 255,   0);
-const RGB_t<uint8_t>	yellow	(127, 255,   0);
-const RGB_t<uint8_t>	orange	(255,  50,   0);
-const RGB_t<uint8_t>	red		(255,   0,   0);
-const RGB_t<uint8_t>	white	(255, 255, 255);
-const RGB_t<uint8_t>	black	(  0,   0,   0);
+using namespace RGBColors;
 
 std::array<RGB_t<uint8_t>, 6> rainbow = {violet, blue, green, yellow, orange, red};
 
@@ -108,11 +114,10 @@ WS2812<numleds> leds(spi_transmit_dma);
 
 
 int main(){  
-    sig::mode(Mode::OUTPUT);
-    iprintf("entry\n");  
+    
+    
     spi_dma_init();
-    iprintf("spi init done\n");    
-        ledOn();    
+     
     while(1){
         for(int i = 6; i >0 ; i--){
             for(int j = 0; j < numleds; j++){
