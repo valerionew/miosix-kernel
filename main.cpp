@@ -107,6 +107,33 @@ using namespace RGBColors;
 
 std::array<RGB_t<uint8_t>, 6> rainbow = {violet, blue, green, yellow, orange, red};
 
+std::array<RGB_t<uint8_t>, 60> long_rainbow ={
+    violet, violet, violet, violet, violet, 
+    violet, violet, violet, violet, violet,
+    blue,   blue,   blue,   blue,   blue, 
+    blue,   blue,   blue,   blue,   blue,
+    green,  green,  green,  green,  green, 
+    green,  green,  green,  green,  green,
+    yellow, yellow, yellow, yellow, yellow, 
+    yellow, yellow, yellow, yellow, yellow,
+    orange, orange, orange, orange, orange, 
+    orange, orange, orange, orange, orange,
+    red,    red,    red,    red,    red, 
+    red,    red,    red,    red,    red
+};
+
+std::array<RGB_t<uint8_t>, 60> dot ={
+    white, black, black, black, black, black, black, black, black, black,
+    black, black, black, black, black, black, black, black, black, black,
+    black, black, black, black, black, black, black, black, black, black,
+    black, black, black, black, black, black, black, black, black, black,
+    black, black, black, black, black, black, black, black, black, black,
+    black, black, black, black, black, black, black, black, black, black
+};
+
+
+#define SCROLL rainbow
+
 WS2812<numleds> leds(spi_transmit_dma);
 
 
@@ -129,12 +156,12 @@ int main(){
 
 
     while(1){
-        for(int i = 6; i >0 ; i--){
+        for(int i = SCROLL.size(); i > 0 ; i--){
             {
                 Lock<Mutex> lock(mutex); //using RAII mutex
 
                 for(int j = 0; j < numleds; j++){
-                    leds.setPixel(j, rainbow[(j+i)%6]);
+                    leds.setPixel(j, SCROLL[(j+i)%SCROLL.size()]);
                 }
                 full.signal();
             }
