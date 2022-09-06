@@ -114,7 +114,6 @@ WS2812<numleds> leds(spi_transmit_dma);
 
 int main(){  
     
-    
     spi_dma_init();
      
     while(1){
