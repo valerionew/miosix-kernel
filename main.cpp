@@ -120,7 +120,9 @@ int main(){
     while(1){
         for(int i = 6; i >0 ; i--){
             {
-                pthread_mutex_lock(&mutex); // since we will be writing to the leds array, we need to lock the mutex
+                pthread_mutex_lock(&mutex); 
+                // since we will be writing to the leds array, we need to lock the mutex. This way, we could separate the producer and the consumer in different threads.
+
                 for(int j = 0; j < numleds; j++){
                     leds.setPixel(j, rainbow[(j+i)%6]);
                 }
