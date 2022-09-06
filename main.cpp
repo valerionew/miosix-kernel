@@ -15,7 +15,9 @@ static Thread *waiting;
 
 static bool dmaerror = false;
 
-pthread_mutex_t mutex=PTHREAD_MUTEX_INITIALIZER;
+
+Mutex mutex;
+ConditionVariable full;
 
 //using sck  = Gpio<GPIOB_BASE,13>; // we don't even need to occupy a pin for the clock, just the mosi is enough
 using WS2812pin = Gpio<GPIOB_BASE,15>; //Used as HW SPI
@@ -45,7 +47,6 @@ void spi_dma_init(){
 
 bool spi_transmit_dma(uint8_t * data, uint32_t length){
 
-        pthread_mutex_lock(&mutex);
         waiting=Thread::getCurrentThread();
         dmaerror =false; //clear prev errors
 
@@ -65,23 +66,20 @@ bool spi_transmit_dma(uint8_t * data, uint32_t length){
                     | DMA_SxCR_DMEIE   //Interrupt on direct mode error
                     | DMA_SxCR_EN;     // start DMA
                         
-    {
-        FastInterruptDisableLock dLock;
-        while(waiting!=0)
         {
-            waiting->IRQwait();
+            FastInterruptDisableLock dLock;
+            while(waiting!=0)
             {
-                FastInterruptEnableLock eLock(dLock);
-                Thread::yield();
+                waiting->IRQwait();
+                {
+                    FastInterruptEnableLock eLock(dLock);
+                    Thread::yield();
+                }
             }
         }
-    }
     bool result=!dmaerror;
-    pthread_mutex_unlock(&mutex);
     return result;
 }
-
-
 
 void __attribute__((used)) SPI2txDmaHandlerImpl()
 {
@@ -112,24 +110,37 @@ std::array<RGB_t<uint8_t>, 6> rainbow = {violet, blue, green, yellow, orange, re
 WS2812<numleds> leds(spi_transmit_dma);
 
 
+void writer(void *argv){
+    while(1){
+        Lock<Mutex> lock(mutex); //using RAII mutex
+
+        full.wait(lock);
+        leds.show();
+        ledOff();
+    }
+}
+
 int main(){  
-    
+
     spi_dma_init();
-     
+
+    Thread *consumer_thread;
+    consumer_thread=Thread::create(writer,2048,1);
+
+
     while(1){
         for(int i = 6; i >0 ; i--){
             {
-                pthread_mutex_lock(&mutex); 
-                // since we will be writing to the leds array, we need to lock the mutex. This way, we could separate the producer and the consumer in different threads.
+                Lock<Mutex> lock(mutex); //using RAII mutex
 
                 for(int j = 0; j < numleds; j++){
                     leds.setPixel(j, rainbow[(j+i)%6]);
                 }
-                pthread_mutex_unlock(&mutex);
+                full.signal();
             }
-            leds.show();
             Thread::sleep(50);
         }
     }
+     consumer_thread->join();
 }
 
