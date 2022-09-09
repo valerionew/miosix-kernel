@@ -137,7 +137,9 @@ std::array<RGB_t<uint8_t>, 60> dot ={
 WS2812<numleds> leds(spi_transmit_dma);
 
 
-void writer(void *argv){
+void consumer(void *argv){
+
+    spi_dma_init();
     while(1){
         Lock<Mutex> lock(mutex); //using RAII mutex
 
@@ -149,10 +151,8 @@ void writer(void *argv){
 
 int main(){  
 
-    spi_dma_init();
-
     Thread *consumer_thread;
-    consumer_thread=Thread::create(writer,2048,1);
+    consumer_thread=Thread::create(consumer,256,1);
 
 
     while(1){
